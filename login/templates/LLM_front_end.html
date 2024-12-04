@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Chat Interface</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .container {
+      display: flex;
+      width: 100%;
+    }
+    .left-panel {
+      width: 30%;
+      background-color: #f4f4f4;
+      border-right: 1px solid #ddd;
+      padding: 20px;
+    }
+    .right-panel {
+      width: 70%;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-area {
+      flex-grow: 1;
+      padding: 20px;
+      background-color: #fff;
+      overflow-y: auto;
+      border-bottom: 1px solid #ddd;
+    }
+    .chat-input {
+      padding: 10px;
+      display: flex;
+      border-top: 1px solid #ddd;
+    }
+    .chat-input input {
+      flex-grow: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .chat-input button {
+      padding: 10px 20px;
+      margin-left: 10px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .chat-input button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Left Panel -->
+    <div class="left-panel">
+      <h3>Actions</h3>
+      <ul>
+        <li><button onclick="selectAction('chat')">Chat with Bot</button></li>
+        <li><button onclick="selectAction('other')">Other Action</button></li>
+      </ul>
+    </div>
+    
+    <!-- Right Panel -->
+    <div class="right-panel">
+      <div class="chat-area" id="chatArea">
+        <p><b>Bot:</b> Hello! How can I assist you?</p>
+      </div>
+      <div class="chat-input">
+        <input type="text" id="userInput" placeholder="Type your message...">
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function selectAction(action) {
+      const chatArea = document.getElementById('chatArea');
+      if (action === 'chat') {
+        chatArea.innerHTML = "<p><b>Bot:</b> Hello! How can I assist you?</p>";
+      } else {
+        chatArea.innerHTML = "<p><b>Info:</b> You selected another action.</p>";
+      }
+    }
+
+    function sendMessage() {
+      const userInput = document.getElementById('userInput');
+      const chatArea = document.getElementById('chatArea');
+      const message = userInput.value;
+      if (message.trim()) {
+        chatArea.innerHTML += `<p><b>You:</b> ${message}</p>`;
+        userInput.value = '';
+        // Simulate bot response
+        setTimeout(() => {
+          chatArea.innerHTML += `<p><b>Bot:</b> This is a simulated response.</p>`;
+          chatArea.scrollTop = chatArea.scrollHeight; // Scroll to the bottom
+        }, 500);
+      }
+    }
+  </script>
+</body>
+</html>
