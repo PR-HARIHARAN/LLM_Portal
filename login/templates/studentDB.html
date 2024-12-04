@@ -86,74 +86,85 @@
   <div class="sidebar">
     <h2>Student Dashboard</h2>
     <ul>
-      <li>Dashboard</li>
-      <li>Profile</li>
-      <li>Settings</li>
-      <li>Logout</li>
+      <li><a href="/dashboard" style="text-decoration: none; color: inherit;">Dashboard</a></li>
+      <li><a href="/profile" style="text-decoration: none; color: inherit;">Profile</a></li>
+      <li><a href="/settings" style="text-decoration: none; color: inherit;">Settings</a></li>
+      <li><a href="/logout" style="text-decoration: none; color: inherit;">Logout</a></li>
     </ul>
+    
   </div>
   
   <!-- Main Content -->
   <div class="main-content">
-    <h1>Welcome, Student!</h1>
+    <h1>Welcome, {{ student[0] }}!</h1>
     <div class="progress-container">
-      <div class="progress-box">
-        <h3>Total Tasks Completed</h3>
-        <p>10</p>
-      </div>
-      <div class="progress-box">
-        <h3>Current Rank</h3>
-        <p>8 Kyu</p>
-      </div>
-      <div class="progress-box">
-        <h3>Next Goal</h3>
-        <p>7 Kyu</p>
-      </div>
+        <div class="progress-box">
+            <h3>CTPS Score</h3>
+            <p>{{ student[1] }}%</p>
+        </div>
+        <div class="progress-box">
+            <h3>Total Score</h3>
+            <p>{{ student[8] }}</p>
+        </div>
+        <div class="progress-box">
+            <h3>PDS Score</h3>
+            <p>{{ student[7] }}%</p>
+        </div>
     </div>
     <div class="chart-container">
-      <h3>Progress Chart</h3>
-      <canvas id="progressChart"></canvas>
+        <h3>Progress Chart</h3>
+        <canvas id="progressChart"></canvas>
     </div>
   </div>
 
+  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script>
     // Progress Chart
     const ctx = document.getElementById('progressChart').getContext('2d');
     const progressChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['CTPS','L1', 'L2', 'L3', 'L4', 'L5', 'PDS'],
-        datasets: [{
-          label: 'Completion Percentage (%)',
-          data: [98.7, 93.27, 85, 43, 45, 60, 88],
-          backgroundColor: '#00854a',
-          borderColor: '#ffffff',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              color: '#ffffff',
-            }
-          },
-          x: {
-            ticks: {
-              color: '#ffffff',
-            }
-          }
+        type: 'bar',
+        data: {
+            labels: ['CTPS', 'L1', 'L2', 'L3', 'L4', 'L5', 'PDS'],
+            datasets: [{
+                label: 'Completion Percentage (%)',
+                data: [
+                    {{ student[1] | default(0) }},
+                    {{ student[2] | default(0) }},
+                    {{ student[3] | default(0) }},
+                    {{ student[4] | default(0) }},
+                    {{ student[5] | default(0) }},
+                    {{ student[6] | default(0) }},
+                    {{ student[7] | default(0) }}
+                ],
+                backgroundColor: '#00854a',
+                borderColor: '#ffffff',
+                borderWidth: 1
+            }]
         },
-        plugins: {
-          legend: {
-            labels: {
-              color: '#ffffff'
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#ffffff',
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#ffffff',
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
             }
-          }
         }
-      }
     });
   </script>
 </body>
