@@ -110,15 +110,43 @@ def login():
             
             elif is_admin == 0:  # Regular user
                 flash(f"Welcome, {portal_id}!", 'success')
-                return render_template('studentDB.html')  # Redirect to the dashboard
+                return redirect(url_for('dashboard'))  # Redirect to the dashboard
         else:
             flash('Invalid username or password!', 'danger')
 
     return render_template('login.html')
 
+
 @app.route('/dashboard')
 def dashboard():
-    return "This is the dashboard. Login successful!"
+    portal_id = session.get('portal_id')  # Retrieve logged-in student's portal ID from the session
+    if not portal_id:
+        flash("You must log in first!", "danger")
+        return redirect(url_for('login'))
+
+    cur = mysql.connection.cursor()
+
+    # Fetch student data based on portal ID
+    cur.execute("""
+        SELECT Name, CTPS, L1, L2, L3, L4, L5, PDS, `Total score`
+        FROM studentsperformance
+        WHERE Portal_ID = %s
+    """, (portal_id,))
+    student_data = cur.fetchone()  # Fetch one row
+    cur.close()
+
+    # Check if the student exists
+    if not student_data:
+        flash("No data found for your account. Please contact the administrator.", "warning")
+        return redirect(url_for('login'))
+
+    # Pass the data to the HTML template
+    return render_template('studentDB.html', student=student_data)
+
+@app.route('/logout')
+def logout():
+    return redirect(url_for('login'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)
