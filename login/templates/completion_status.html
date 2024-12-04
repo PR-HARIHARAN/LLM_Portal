@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Completion Criteria</title>
+    <style>
+        /* General Body Styling */
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #1f1c2c, #928dab);
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Container Styling */
+        .form-container {
+            width: 70%;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Heading */
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #e0e0e0;
+            font-size: 2rem;
+            letter-spacing: 1px;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: linear-gradient(to right, #cccc00, #ffff00);
+            color: black;
+            font-size: 1.1rem;
+        }
+
+        td {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f0f0f0;
+        }
+
+        /* Input Fields */
+        input[type="number"] {
+            width: 90%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(78, 84, 200, 0.8);
+            border-color: #4e54c8;
+        }
+
+        /* Buttons */
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            color: black;
+            cursor: pointer;
+            margin-top: 15px;
+            background: linear-gradient(to right, #fff701, #f5fc3a);
+            transition: 0.3s ease-in-out;
+        }
+
+        button:hover {
+            background: linear-gradient(to right, #ffff00, #cccc00);
+            transform: scale(1.02);
+        }
+
+        .redirect-btn {
+            background: linear-gradient(to right, #00854a, #a8e063);
+        }
+
+        .redirect-btn:hover {
+            background: linear-gradient(to right, #a8e063, #56ab2f);
+        }
+
+        .flash-message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .flash-success {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .flash-danger {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Edit Completion Criteria</h1>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <!-- Form -->
+        <form action="/update_completion_status" method="POST">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subject, score in scores.items() %}
+                    <tr>
+                        <td>{{ subject }}</td>
+                        <td>
+                            <input type="number" name="{{ subject }}" value="{{ score }}" placeholder="Enter score" required>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button type="submit">Save Changes</button>
+            <button type="button" class="redirect-btn" onclick="window.location.href='/redirect_to_llm'">Go to Chat with LLM</button>
+        </form>
+    </div>
+</body>
+</html>
