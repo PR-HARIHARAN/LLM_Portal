@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completion Criteria</title>
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e293b, #374151);
+            color: #f1f5f9;
+            display: flex;
+            min-height: 100vh;
+            position: relative; /* Ensure toggle button stays visible */
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            height: 100%;
+            width: 0;
+            background: #1f2937;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-x: hidden;
+            transition: width 0.3s ease-in-out;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+            padding-top: 60px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.open {
+            width: 200px;
+        }
+
+        .sidebar button {
+            background: #4f46e5;
+            border: none;
+            color: #f8fafc;
+            text-align: center;
+            padding: 1rem;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+
+        .sidebar button:hover {
+            background: #9333ea;
+            transform: scale(1.05);
+        }
+
+        .toggle-btn {
+            position: fixed;
+            top: 5px;
+            left: 20px;
+            background: #9333ea;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            height: 50px;
+            width: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(147, 51, 234, 0.5);
+        }
+
+        /* Content Styling */
+        .content {
+            margin-left: 0;
+            padding: 1rem;
+            width: 100%;
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        .sidebar.open ~ .content {
+            margin-left: 200px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            color: #f8fafc;
+        }
+
+        form {
+            background: #1f2937;
+            border: 2px solid #4b5563;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+            max-width: 600px;
+            margin: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #4b5563;
+        }
+
+        th {
+            background: #4f46e5;
+            color: #f8fafc;
+        }
+
+        td {
+            background: #334155;
+            color: #e2e8f0;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 0.75rem;
+            background: #334155;
+            color: #e2e8f0;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border: 2px solid #4f46e5;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(90deg, #4f46e5, #9333ea);
+            color: #f8fafc;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(147, 51, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <button onclick="window.location.href='/llm'">Go to LLM</button>
+        <button onclick="window.location.href='/logout'">Logout</button>
+    </div>
+
+    <!-- Toggle Button -->
+    <button class="toggle-btn" onclick="toggleSidebar()">&#9776;</button>
+
+    <!-- Content -->
+    <div class="content">
+        <h1>Edit Completion Criteria</h1>
+        <form action="/completion_status" method="POST">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subject, score in scores.items() %}
+                    <tr>
+                        <td>{{ subject }}</td>
+                        <td>
+                            <input type="number" name="{{ subject }}" value="{{ score }}" required>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button type="submit">Save Changes</button>
+        </form>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+    </script>
+</body>
+</html>
