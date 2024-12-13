@@ -26,6 +26,22 @@ DATABASE_CONFIG = {
     "port": 3306,
     "database": "studentdb"
 }
+# Database configuration for restricted user
+LIMITED_DATABASE_CONFIG = {
+    "username": "limited_user",
+    "password": "",
+    "host": "localhost",
+    "port": 3306,
+    "database": "studentdb"
+}
+
+def connect_database_with_limited_user():
+    """Connect to the database using the limited user configuration."""
+    global db
+    config = LIMITED_DATABASE_CONFIG
+    mysql_uri = f"mysql+mysqlconnector://{config['username']}:{config['password']}@{config['host']}:{config['port']}/{config['database']}"
+    db = SQLDatabase.from_uri(mysql_uri)
+    print("Connected to database as limited user.")
 
 
 llm = ChatOllama(model="llama3.2")
@@ -96,7 +112,6 @@ def get_response_for_query_result(question, query, result):
 
     your turn to write response in natural language:
     question: {question}
-    SQL query: {query}
     Result: {result}
     Response:"""
 
@@ -269,7 +284,7 @@ def chat():
     global db
     if db is None:
         try:
-            connect_database()
+            connect_database_with_limited_user()
         except Exception as e:
             print(f"Database connection error: {e}")  # Added debugging
             flash(f"Failed to connect to the database: {e}", "danger")
@@ -309,3 +324,4 @@ def logout():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
