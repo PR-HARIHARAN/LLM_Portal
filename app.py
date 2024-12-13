@@ -75,9 +75,13 @@ def get_query_from_llm(question):
     template = """below is the schema of MYSQL database, read the schema carefully about the table and column names. Also take care of table or column name case sensitivity.
     Finally answer user's question in the form of SQL query.
 
+
     {schema}
 
     Please only provide the SQL query and nothing else.
+
+    also if the question asks name or NAME or Name it should pickup 'Name' column of database
+    don't retrive portal_id only always retrive Name if portal_id is asked
 
     Example:
     question: how many subjects do we have in the database?
@@ -102,6 +106,11 @@ def get_response_for_query_result(question, query, result):
     template2 = """below is the schema of MYSQL database, read the schema carefully about the table and column names.
     Finally write a response in natural language by looking into the conversation and result.
 
+    1.don't remove anything from result show result
+    1.don't summarize about student data always show the data line by line .
+    2.like if the response is about 111 students give the response of each row in line by line
+
+
     {schema}
 
     Example:
@@ -109,6 +118,11 @@ def get_response_for_query_result(question, query, result):
     SQL query: SELECT COUNT(*) FROM studentsperformance;
     Result : [(111,)]
     Response: There are 111 students in the database.
+
+    question: show me students who completed ctps?
+    SQL query: SELECT NAME FROM studentsperformance WHERE completed_ctps=1;
+    Result : Names of students
+    Response: these are the students who completed ctps.
 
     your turn to write response in natural language:
     question: {question}
@@ -234,7 +248,7 @@ def completion_status():
             L5 = request.form.get('L5')
             PDS = request.form.get('PDS')
 
-            # Update query
+            # Update the `completion_status` table
             query = """
                 UPDATE completion_status
                 SET CTPS = %s, L1 = %s, L2 = %s, L3 = %s, L4 = %s, L5 = %s, PDS = %s, last_edited = NOW()
@@ -242,6 +256,20 @@ def completion_status():
             """
             cur = mysql.connection.cursor()
             cur.execute(query, (CTPS, L1, L2, L3, L4, L5, PDS))
+            mysql.connection.commit()
+
+            # Update the `completed_` columns in `studentperformance`
+            update_query = """
+                UPDATE studentsperformance
+                SET completed_CTPS = CASE WHEN CTPS >= %s THEN 1 ELSE 0 END,
+                    completed_L1 = CASE WHEN L1 >= %s THEN 1 ELSE 0 END,
+                    completed_L2 = CASE WHEN L2 >= %s THEN 1 ELSE 0 END,
+                    completed_L3 = CASE WHEN L3 >= %s THEN 1 ELSE 0 END,
+                    completed_L4 = CASE WHEN L4 >= %s THEN 1 ELSE 0 END,
+                    completed_L5 = CASE WHEN L5 >= %s THEN 1 ELSE 0 END,
+                    completed_PDS = CASE WHEN PDS >= %s THEN 1 ELSE 0 END
+            """
+            cur.execute(update_query, (CTPS, L1, L2, L3, L4, L5, PDS))
             mysql.connection.commit()
             cur.close()
 
@@ -255,6 +283,7 @@ def completion_status():
         print(f"Error in completion_status: {e}")
         flash("An error occurred. Please try again later.", "danger")
         return redirect(url_for('login'))
+
 """
 @app.route('/llm', methods=['GET', 'POST'])
 def chat():
@@ -306,7 +335,8 @@ def chat():
                                  question=question, 
                                  query=query, 
                                  result=result, 
-                                 response=response)
+                                 response=response
+            )
         except Exception as e:
             print(f"Error in chat route: {e}")  # Added debugging
             flash(f"An error occurred: {e}", "danger")

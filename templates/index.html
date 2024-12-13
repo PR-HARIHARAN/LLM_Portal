@@ -197,10 +197,11 @@
         </form>
         
         <!-- Add this new section for displaying the response -->
-        {% if response %}
+        {% if result %}
         <div class="response-container">
-            <h2>Response:</h2>
-            <p>{{ response }}</p>
+            <h2>Result:</h2>
+            <p>{{ result }}</p>
+            <p>{{response}}
         </div>
         {% endif %}
     </div>
