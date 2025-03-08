@@ -1,1 +1,0 @@
-**Scores by Name**: This bar chart will display the total scores for each individual, allowing you to compare their performance.

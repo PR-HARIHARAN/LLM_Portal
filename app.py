@@ -9,6 +9,28 @@ import base64
 import os
 import logging
 
+# User authentication database
+USERS_DB = {
+    "admin": "admin",
+    "user1": "password1",
+    "user2": "password2",
+    "guest": "guest123"
+}
+
+@cl.password_auth_callback
+def auth_callback(username: str, password: str):
+    """Authenticate users using a simple dictionary-based system."""
+    if username in USERS_DB and password == USERS_DB[username]:
+        return cl.User(
+            identifier=username,
+            metadata={"role": "admin" if username == "admin" else "user"}
+        )
+    return None
+
+@cl.on_chat_resume
+async def on_chat_resume(thread):
+    pass
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
