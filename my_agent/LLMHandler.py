@@ -2,23 +2,30 @@ import json
 import requests
 from typing import Dict, Any, Optional, List, Tuple
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_ollama import ChatOllama
+from langchain_groq import ChatGroq
 import pandas as pd
 import logging
+from dotenv import load_dotenv
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 class LLMHandler:
-    def __init__(self, model_name: str = "mistral-nemo:latest", api_url: str = "http://localhost:11434", 
+    def __init__(self, model_name: str = "MODEL_NAME", api_url: str = "GROQ_API_KEY", 
                  temperature: float = 0.7, max_tokens: int = 512, timeout: int = 10):
+
+        if not model_name or not api_url:
+            os.environ["MODEL_NAME"] = model_name
+            os.environ["GROQ_API_KEY"] = api_url
+            
         self.model_name = model_name
         self.api_url = api_url
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.timeout = timeout
         self.session = requests.Session()
-        self.llm = ChatOllama(
+        self.llm = ChatGroq(
             model=self.model_name,
             temperature=self.temperature,
             max_tokens=self.max_tokens
