@@ -1,18 +1,18 @@
-from my_agent.DatabaseManager import DatabaseManager
+
+from my_agent.DatabaseManager import DatabaseManager ,format_result_as_table
 from my_agent.LLMHandler import LLMHandler
 from my_agent.VisualizationHandler import VisualizationHandler
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from fastapi.responses import JSONResponse, StreamingResponse
-from typing import List
-import uuid
+from typing import List, Tuple, Optional
+import pandas as pd
+import base64
 import time
+import uuid
 import json
 import asyncio
-import os
-
 
 app = FastAPI()
 
@@ -25,13 +25,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Initialize components
 db_manager = DatabaseManager()
-db = db_manager.connect_database()
 llm_handler = LLMHandler()
 visualization_handler = VisualizationHandler()
 
-
-# Pydantic schemas
+# Request/response schemas
 class Message(BaseModel):
     role: str
     content: str
@@ -41,15 +40,15 @@ class ChatRequest(BaseModel):
     messages: List[Message]
     stream: bool = False
 
+# Task classifier
+async def classify_task(user_message: str) -> str:
+    intent = llm_handler.analyze_intent(user_message)
+    print(intent)
+    return intent
 
-"""
-Function to be used to call llm and get the response and visualization
- """
-
-
-# model str structure to openweb-ui
-
-    output_str= f"""**Generated SQL Query:**
+# Format final output
+def format_output(sql: str, table_html: str, summary: str) -> str:
+    return f"""**Generated SQL Query:**
 ```sql
 {sql}
 ```
@@ -57,16 +56,14 @@ Function to be used to call llm and get the response and visualization
 <details>
 <summary>📊 Click to view data</summary>
 
-{table}
+{table_html}
 </details>
 
 **Result:**
 {summary}
 """
-    return output_str
 
-
-
+# Route models
 @app.get("/v1/models")
 async def list_models():
     return {
@@ -81,46 +78,61 @@ async def list_models():
         ]
     }
 
-
-
 @app.post("/v1/chat/completions")
 async def chat_with_agent(request: ChatRequest):
     try:
-        # Get latest user message
         user_message = next((m.content for m in reversed(request.messages) if m.role == "user"), "")
-        
-        # Classify task
         task_type = await classify_task(user_message)
-        
-        # Route to appropriate handler
-        if task_type == "SQL":
-           """LOGIC FOR SQL QUERY GENERATION"""
-            
-        else: #chat
-            """LOGIC FOR CHAT RESPONSE"""
-           
+        print(f"User message: {user_message}")
+        print(f"Classified as: {task_type}")
 
-        # Metadata
+        if task_type == "SQL":
+            schema = db_manager.get_database_schema()
+            sql_query = llm_handler.get_query_from_llm(schema, user_message)
+            
+            try:
+                columns, data = db_manager.execute_read_query(sql_query)
+                result = [dict(zip(columns, row)) for row in data]
+            except Exception as exec_error:
+                corrected_query = llm_handler.correct_query(schema, user_message, sql_query, str(exec_error))
+                if corrected_query:
+                    try:
+                        columns, data = db_manager.execute_read_query(corrected_query)
+                        
+                        sql_query = corrected_query
+                    except Exception as corr_error:
+                        issues = llm_handler.validate_generated_sql(corrected_query)
+                        raise Exception(f"Validation failed: {', '.join(issues['issues'])}")
+                else:
+                    raise Exception(f"Execution failed: {exec_error}")
+            
+            # Generate visualization
+            #df = pd.DataFrame(data, columns=columns)
+            table_html = format_result_as_table(result)
+
+            summary = llm_handler.generate_summary(
+                user_message,
+                [dict(zip(columns, row)) for row in data]
+            )
+
+            output_str = format_output(sql_query, table_html, summary)
+
+        elif task_type == "CHAT":
+            # Chat fallback
+            output_str = llm_handler.generate_chat_response(user_message)
+
+        # Build OpenAI-compatible response
         completion_id = f"chatcmpl-{uuid.uuid4()}"
         created = int(time.time())
 
-        # If streaming is enabled, stream chunked responses
         if request.stream:
             async def stream():
-                # Start message
                 yield f"data: {json.dumps({'id': completion_id, 'object': 'chat.completion.chunk', 'created': created, 'model': request.model, 'choices': [{'delta': {'role': 'assistant'}, 'index': 0}]})}\n\n"
-
-                # Content
                 yield f"data: {json.dumps({'id': completion_id, 'object': 'chat.completion.chunk', 'created': created, 'model': request.model, 'choices': [{'delta': {'content': output_str}, 'index': 0}]})}\n\n"
-
-                # End
                 yield f"data: {json.dumps({'id': completion_id, 'object': 'chat.completion.chunk', 'created': created, 'model': request.model, 'choices': [{'delta': {}, 'finish_reason': 'stop', 'index': 0}]})}\n\n"
                 yield "data: [DONE]\n\n"
-
             return StreamingResponse(stream(), media_type="text/event-stream")
 
-        
-        # Non-streaming response
         return {
             "id": completion_id,
             "object": "chat.completion",
@@ -130,7 +142,7 @@ async def chat_with_agent(request: ChatRequest):
                 "index": 0,
                 "message": {
                     "role": "assistant",
-                    "content": response_text
+                    "content": output_str
                 },
                 "finish_reason": "stop"
             }],
@@ -143,3 +155,4 @@ async def chat_with_agent(request: ChatRequest):
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
+

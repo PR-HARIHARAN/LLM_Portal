@@ -5,26 +5,52 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 import pandas as pd
 import logging
+import os
 from dotenv import load_dotenv
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-class LLMHandler:
-    def __init__(self, model_name: str = "MODEL_NAME", api_url: str = "GROQ_API_KEY", 
-                 temperature: float = 0.7, max_tokens: int = 512, timeout: int = 10):
 
-        if not model_name or not api_url:
-            os.environ["MODEL_NAME"] = model_name
-            os.environ["GROQ_API_KEY"] = api_url
-            
-        self.model_name = model_name
-        self.api_url = api_url
+def clean_llm_sql(raw_sql: str) -> str:
+    raw_sql = raw_sql.lower()
+    if not raw_sql:
+        return ""
+    cleaned = raw_sql.strip()
+    if cleaned.startswith("```sql"):
+        cleaned = cleaned[6:].strip()
+    elif cleaned.startswith("```"):
+        cleaned = cleaned[3:].strip()
+    elif cleaned.startswith("sql"):
+        cleaned = cleaned[3:].strip()
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3].strip()
+    return cleaned.replace("`", "").strip()
+
+class LLMHandler:
+    def __init__(self, 
+                 model_name: Optional[str] = None,
+                 api_url: Optional[str] = None, 
+                 temperature: float = 0.7, 
+                 max_tokens: int = 512, 
+                 timeout: int = 10):
+        
+        # Load from env if not explicitly passed
+        self.model_name = model_name or os.getenv("MODEL_NAME")
+        self.api_url = api_url or os.getenv("GROQ_API_KEY")
+
+        if not self.model_name or not self.api_url:
+            raise ValueError("Model name or GROQ API key is not set")
+
+        # Set required env variable for LangChain Groq wrapper
+        os.environ["GROQ_API_KEY"] = self.api_url
+        
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.timeout = timeout
         self.session = requests.Session()
+
         self.llm = ChatGroq(
             model=self.model_name,
             temperature=self.temperature,
@@ -34,23 +60,20 @@ class LLMHandler:
     def analyze_intent(self, question: str) -> str:
         try:
             prompt = ChatPromptTemplate.from_template("""
-            Analyze if this question relates to database queries or general chat.
-            Return exactly "database" for questions about:
-            - Retrieving table information
-            - Counting records
-            - Student performance
-            - Grades
-            - Filtering student data
-            Return exactly "chat" for general conversation.
+            You are a helpful assistant. Determine the intent of the following user question.
+                - SQL: Structured banking data (e.g., customers, transactions, loans, account types, cities) top k or bottom k values.
+                - CHAT: Casual greetings only, don't try to answer any other thing look fo vector or sql can be capable or not.
+
+            Briefly identify the intent. Respond with one word: SQL, CHAT
 
             Question: {question}
             """)
             
             response = (prompt | self.llm).invoke({"question": question})
-            return str(response.content).strip().lower()
+            return str(response.content).strip().upper()
         except Exception as e:
             logger.error(f"Error analyzing intent: {e}")
-            return "chat"
+            return "CHAT"
 
     def get_query_from_llm(self, schema: str, question: str) -> str:
         try:
@@ -68,7 +91,8 @@ class LLMHandler:
 
             prompt = ChatPromptTemplate.from_template(template)
             response = (prompt | self.llm).invoke({"schema": schema, "question": question})
-            return str(response.content).strip()
+            result =str(response.content).strip()
+            return clean_llm_sql(result)
         except Exception as e:
             logger.error(f"Error generating query: {e}")
             return ""

@@ -59,3 +59,28 @@ class DatabaseManager:
         except Exception as e:
             print(f"Error executing query: {e}")
             raise
+def format_result_as_table(result):
+    """Format query result as a table."""
+    if not result:
+        return "No data available."
+
+    # Extract headers from the first dictionary
+    headers = list(result[0].keys())
+
+    # Format headers
+    header_row = "| " + " | ".join(header.replace("_", " ").title() for header in headers) + " |"
+    separator_row = "| " + " | ".join("-" * len(header) for header in headers) + " |"
+
+    # Format each row
+    data_rows = []
+    for row in result:
+        formatted = []
+        for key in headers:
+            val = row[key]
+            if isinstance(val, float):
+                val = f"{val:,.2f}"
+            formatted.append(str(val))
+        data_rows.append("| " + " | ".join(formatted) + " |")
+
+    # Combine all parts
+    return "\n".join([header_row, separator_row] + data_rows)
