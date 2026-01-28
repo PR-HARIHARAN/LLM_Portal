@@ -4,6 +4,11 @@
 The AI-Powered Student Performance Dashboard is a web-based platform designed to simplify the process of analyzing student performance. It provides students with visualizations of their scores and enables staff to extract data effortlessly using natural language queries powered by a Large Language Model (LLM). This system integrates with the LMS Portal, where students engage in competitive programming and practice, storing their progress data for analysis.
 
 ---
+## 📹 Video Demo
+
+[![Demo](https://img.youtube.com/vi/cT2jXRFSZG4/maxresdefault.jpg)](https://youtu.be/cT2jXRFSZG4)
+
+---
 
 ## 🛠️ **Features**
 - **Interactive Visualizations**: Students can visualize their scores and performance trends.  
